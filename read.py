@@ -1,7 +1,20 @@
 # -*- coding: utf-8 -*-
+"""Vinmonopolet's parser
+
+Usage:
+  read.py search <name>
+  read.py get <type> 
+  read.py (-h | --help)
+  read.py --version
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+"""
 import requests
 import itertools
 import functools
+from docopt import docopt
 
 API_URL = 'http://www.vinmonopolet.no/api/produkter'
 
@@ -75,15 +88,23 @@ def is_type(type, product):
 
 
 if __name__ == '__main__':
-    data = read_data()
+    arguments = docopt(__doc__, version="Vinmonopolet 0.1")
 
+    data = read_data()
     is_beer = functools.partial(is_type, u'Øl')
     all_beers = itertools.ifilter(is_beer, data)
-    for beer in all_beers:
-        print("{} - {}".format(
-            beer.get('Produsent').encode("utf-8"),
-            beer.get('Varenavn').encode("utf-8")))
 
-    all_types = get_types(data)
-    for t in all_types:
-        print("Type: {}".format(t.encode("utf-8")))
+    if 'search' in arguments:
+        raise NotImplementedError("Will come soon")
+
+    elif 'get' in arguments:
+        raise NotImplementedError("Will come soon")
+
+    # for beer in all_beers:
+    #     print("{} - {}".format(
+    #         beer.get('Produsent').encode("utf-8"),
+    #         beer.get('Varenavn').encode("utf-8")))
+
+    # all_types = get_types(data)
+    # for t in all_types:
+    #     print("Type: {}".format(t.encode("utf-8")))
