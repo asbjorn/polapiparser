@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import requests
+import itertools
+import functools
 
 API_URL = 'http://www.vinmonopolet.no/api/produkter'
 
@@ -63,10 +65,25 @@ def read_data():
     d.encoding = 'ISO-8859-1'
     return (parse_line(line) for line in d.text.splitlines()[1:])
 
+
+def get_types(data):
+    return set((t['Varetype'] for t in data))
+
+
+def is_type(type, product):
+    return product['Varetype'] == type
+
+
 if __name__ == '__main__':
     data = read_data()
-    ol = [prod for prod in data if prod['Varetype'] == u'Øl']
-    ol = sorted(ol, key=lambda o: o['Produsent'])
-    # print json.dumps(ol, indent=4)
-    for o in ol:
-        print '%s - %s' % (o['Produsent'], o['Varenavn'])
+
+    is_beer = functools.partial(is_type, u'Øl')
+    all_beers = itertools.ifilter(is_beer, data)
+    for beer in all_beers:
+        print("{} - {}".format(
+            beer.get('Produsent').encode("utf-8"),
+            beer.get('Varenavn').encode("utf-8")))
+
+    all_types = get_types(data)
+    for t in all_types:
+        print("Type: {}".format(t.encode("utf-8")))
