@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import requests
-import json
 
 API_URL = 'http://www.vinmonopolet.no/api/produkter'
 
@@ -62,12 +61,12 @@ def parse_line(line):
 def read_data():
     d = requests.get(API_URL)
     d.encoding = 'ISO-8859-1'
-    return [parse_line(line) for line in d.text.splitlines()[1:]]
+    return (parse_line(line) for line in d.text.splitlines()[1:])
 
 if __name__ == '__main__':
     data = read_data()
     ol = [prod for prod in data if prod['Varetype'] == u'Øl']
     ol = sorted(ol, key=lambda o: o['Produsent'])
-    #print json.dumps(ol, indent=4)
+    # print json.dumps(ol, indent=4)
     for o in ol:
         print '%s - %s' % (o['Produsent'], o['Varenavn'])
