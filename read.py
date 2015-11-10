@@ -76,7 +76,14 @@ def parse_line(line):
 def read_data():
     d = requests.get(API_URL)
     d.encoding = 'ISO-8859-1'
-    return (parse_line(line) for line in d.text.splitlines()[1:])
+    return (parse_line(line.encode('utf-8'))
+            for line in d.text.splitlines()[1:])
+
+
+def get_all_beers(data):
+    """Returns a generator with a filter on 'Varetype' = u'Øl'
+    """
+    return itertools.ifilter(lambda x: is_type(u'Øl', x), data)
 
 
 def get_types(data):
@@ -84,7 +91,20 @@ def get_types(data):
 
 
 def is_type(type, product):
-    return product['Varetype'] == type
+    """Return true if the item is of the type requested.
+
+    >>> is_type(u'Øl', {'Varetype': u'Øl'}) == True
+    >>> is_type(u'Vin', {'Varetype': u'Øl'}) == False
+    """
+    return product['Varetype'] == type.encode("utf-8")
+
+
+def search(name, all_beers):
+    """Return all matching beer dicts within the 'all_beers'
+    collection of beers.
+    """
+    return [b for b in all_beers
+            if name.lower() in b.get('Varenavn').lower()]
 
 
 if __name__ == '__main__':
@@ -92,19 +112,18 @@ if __name__ == '__main__':
 
     data = read_data()
     is_beer = functools.partial(is_type, u'Øl')
-    all_beers = itertools.ifilter(is_beer, data)
+    all_beers = get_all_beers(data)
 
     if 'search' in arguments:
-        raise NotImplementedError("Will come soon")
+        found_beers = search(arguments['<name>'], all_beers)
+        if found_beers:
+            for beer in found_beers:
+                print("Name: {Varenavn}\n"
+                      "  Country: {Land}\n"
+                      "  Alcohol: {Alkohol}\n"
+                      "  Price: {Pris} NOK\n".format(**beer))
+        else:
+            print("No beer with the name: '{}'".format(arguments['<name>']))
 
     elif 'get' in arguments:
         raise NotImplementedError("Will come soon")
-
-    # for beer in all_beers:
-    #     print("{} - {}".format(
-    #         beer.get('Produsent').encode("utf-8"),
-    #         beer.get('Varenavn').encode("utf-8")))
-
-    # all_types = get_types(data)
-    # for t in all_types:
-    #     print("Type: {}".format(t.encode("utf-8")))
