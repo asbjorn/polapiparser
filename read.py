@@ -1,11 +1,14 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
 """Vinmonopolet's parser
 
 Usage:
-  read.py search <name>
-  read.py get <type> 
+  read.py search <name> [--json] [--max=10]
+  read.py get <type>  [--json]
   read.py (-h | --help)
   read.py --version
+  read.py --json
 
 Options:
   -h --help     Show this screen.
@@ -15,6 +18,7 @@ import requests
 import itertools
 import functools
 from docopt import docopt
+import json
 
 API_URL = 'http://www.vinmonopolet.no/api/produkter'
 
@@ -107,6 +111,10 @@ def search(name, all_beers):
             if name.lower() in b.get('Varenavn').lower()]
 
 
+def search_json(name, all_beers, max_items):
+    return json.dumps(search(name, all_beers)[:max_items])
+
+
 if __name__ == '__main__':
     arguments = docopt(__doc__, version="Vinmonopolet 0.1")
 
@@ -115,15 +123,24 @@ if __name__ == '__main__':
     all_beers = get_all_beers(data)
 
     if 'search' in arguments:
-        found_beers = search(arguments['<name>'], all_beers)
-        if found_beers:
-            for beer in found_beers:
-                print("Name: {Varenavn}\n"
-                      "  Country: {Land}\n"
-                      "  Alcohol: {Alkohol}\n"
-                      "  Price: {Pris} NOK\n".format(**beer))
+        max_items = int(arguments.get('--max'))
+        if arguments.get('--json'):
+            found_beers = search_json(arguments['<name>'],
+                                      all_beers, max_items)
+            print(found_beers)
         else:
-            print("No beer with the name: '{}'".format(arguments['<name>']))
+            found_beers = search(arguments['<name>'], all_beers)
+            if found_beers:
+                for i, beer in enumerate(found_beers):
+                    if i >= max_items:
+                        break
+                    print("Name: {Varenavn}\n"
+                          "  Country: {Land}\n"
+                          "  Alcohol: {Alkohol}\n"
+                          "  Price: {Pris} NOK\n".format(**beer))
+            else:
+                print("No beer with the name: '{}'".
+                      format(arguments['<name>']))
 
     elif 'get' in arguments:
         raise NotImplementedError("Will come soon")
